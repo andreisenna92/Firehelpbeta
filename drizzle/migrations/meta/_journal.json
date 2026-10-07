@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790446707504,
+      "tag": "0000_firehelp_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790446742089,
+      "tag": "0001_fire_images_storage_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790790967756,
+      "tag": "0002_community_messages_gestores",
+      "breakpoints": true
+    }
+  ]
+}
