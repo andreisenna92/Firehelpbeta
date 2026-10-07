@@ -1,4 +1,4 @@
-# FireHelpBeta
+# FireHelp
 
 Versão de apresentação do projeto FireHelp, preparada para funcionar **sem Google Login e sem depender do endpoint do Supabase**.
 

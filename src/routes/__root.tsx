@@ -77,15 +77,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "FireHelpBeta — Informação que protege" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" },
+      { name: "theme-color", content: "#26354f" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "FireHelp" },
+      { title: "FireHelp — Informação que protege" },
       {
         name: "description",
         content:
           "Plataforma comunitária para reportar incêndios, acompanhar ocorrências no mapa e compartilhar informações de prevenção.",
       },
-      { name: "author", content: "FireHelpBeta" },
-      { property: "og:title", content: "FireHelpBeta — Informação que protege" },
+      { name: "author", content: "FireHelp" },
+      { property: "og:title", content: "FireHelp — Informação que protege" },
       {
         property: "og:description",
         content: "Reporte incêndios, acompanhe ocorrências e ajude a proteger sua comunidade.",
@@ -102,6 +107,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/favicon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   shellComponent: RootShell,

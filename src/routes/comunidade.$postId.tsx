@@ -14,12 +14,12 @@ import { FORUM_CATEGORIES, REPORT_REASONS, formatDateTime } from "@/lib/firehelp
 export const Route = createFileRoute("/comunidade/$postId")({
   head: () => ({
     meta: [
-      { title: "Tópico da comunidade — FireHelpBeta" },
+      { title: "Tópico da comunidade — FireHelp" },
       {
         name: "description",
         content: "Participe da discussão da comunidade de Saquarema sobre prevenção e segurança.",
       },
-      { property: "og:title", content: "Tópico da comunidade — FireHelpBeta" },
+      { property: "og:title", content: "Tópico da comunidade — FireHelp" },
       {
         property: "og:description",
         content: "Comente, responda e ajude moradores de Saquarema com informações confiáveis.",

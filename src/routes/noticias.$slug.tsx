@@ -8,12 +8,12 @@ import { NEWS_CATEGORIES, formatDate } from "@/lib/firehelp";
 export const Route = createFileRoute("/noticias/$slug")({
   head: () => ({
     meta: [
-      { title: "Notícia — FireHelpBeta" },
+      { title: "Notícia — FireHelp" },
       {
         name: "description",
-        content: "Leia a notícia completa do FireHelpBeta Saquarema sobre prevenção e incêndios.",
+        content: "Leia a notícia completa do FireHelp Saquarema sobre prevenção e incêndios.",
       },
-      { property: "og:title", content: "Notícia — FireHelpBeta" },
+      { property: "og:title", content: "Notícia — FireHelp" },
       {
         property: "og:description",
         content: "Conteúdo de prevenção, alerta e informação comunitária para Saquarema.",
@@ -54,7 +54,7 @@ function NewsArticle() {
             </span>
             <h1 className="text-3xl font-extrabold leading-tight">{data.title}</h1>
             <p className="text-sm text-muted-foreground">
-              {data.author_name ?? "FireHelpBeta"} · {formatDate(data.created_at)}
+              {data.author_name ?? "FireHelp"} · {formatDate(data.created_at)}
             </p>
             {data.image_url && (
               <img

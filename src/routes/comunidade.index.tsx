@@ -16,13 +16,13 @@ import { FORUM_CATEGORIES, formatDateTime, type ForumCategory } from "@/lib/fire
 export const Route = createFileRoute("/comunidade/")({
   head: () => ({
     meta: [
-      { title: "Comunidade de Saquarema — FireHelpBeta" },
+      { title: "Comunidade de Saquarema — FireHelp" },
       {
         name: "description",
         content:
           "Fórum comunitário de Saquarema para discutir prevenção, ocorrências e segurança contra incêndios.",
       },
-      { property: "og:title", content: "Comunidade de Saquarema — FireHelpBeta" },
+      { property: "og:title", content: "Comunidade de Saquarema — FireHelp" },
       {
         property: "og:description",
         content: "Participe das discussões de Saquarema sobre prevenção, meio ambiente e segurança.",

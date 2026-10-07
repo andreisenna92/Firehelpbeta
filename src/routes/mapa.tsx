@@ -19,13 +19,13 @@ import {
 export const Route = createFileRoute("/mapa")({
   head: () => ({
     meta: [
-      { title: "Mapa de incêndios em Saquarema — FireHelpBeta" },
+      { title: "Mapa de incêndios em Saquarema — FireHelp" },
       {
         name: "description",
         content:
           "Mapa interativo com focos de incêndio reportados pela comunidade de Saquarema, RJ.",
       },
-      { property: "og:title", content: "Mapa de incêndios em Saquarema — FireHelpBeta" },
+      { property: "og:title", content: "Mapa de incêndios em Saquarema — FireHelp" },
       {
         property: "og:description",
         content: "Veja focos de incêndio ativos, reportados e resolvidos em Saquarema.",
@@ -152,6 +152,13 @@ function MapPage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 {report.address ?? "Local aproximado"} · {formatDateTime(report.reported_at)}
               </p>
+              {report.fire_report_images?.[0]?.image_url && (
+                <img
+                  src={report.fire_report_images[0].image_url}
+                  alt="Foto do local da ocorrência"
+                  className="mt-3 h-48 w-full rounded-xl object-cover"
+                />
+              )}
               {report.description && <p className="mt-2 text-sm">{report.description}</p>}
             </div>
           ))}

@@ -19,13 +19,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FireHelpBeta Saquarema — Incêndios e prevenção" },
+      { title: "FireHelp Saquarema — Incêndios e prevenção" },
       {
         name: "description",
         content:
           "Informe incêndios, acompanhe ocorrências no mapa e compartilhe prevenção com a comunidade de Saquarema.",
       },
-      { property: "og:title", content: "FireHelpBeta Saquarema — Incêndios e prevenção" },
+      { property: "og:title", content: "FireHelp Saquarema — Incêndios e prevenção" },
       {
         property: "og:description",
         content: "Informe incêndios e acompanhe ocorrências em Saquarema, Rio de Janeiro.",

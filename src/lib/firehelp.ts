@@ -125,4 +125,4 @@ export function slugify(value: string) {
 }
 
 export const SAFETY_NOTICE =
-  "O FireHelpBeta é uma plataforma comunitária de informação. Em situações de emergência, afaste-se do perigo e acione os serviços oficiais de emergência.";
+  "O FireHelp é uma plataforma comunitária de informação. Em situações de emergência, afaste-se do perigo e acione os serviços oficiais de emergência.";

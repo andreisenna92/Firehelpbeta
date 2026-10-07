@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * FireHelpBeta design system.
+ * FireHelp design system.
  * Institutional navy + alert red/orange + safe green.
  */
 
@@ -175,4 +175,46 @@
   background: var(--color-muted);
   font-family: var(--font-sans);
   z-index: 0;
+}
+
+
+/* Mobile app-like experience */
+html {
+  min-height: 100%;
+  background: var(--color-background);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  margin: 0;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: manipulation;
+}
+
+img, video, canvas, svg {
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .surface-card {
+    border-radius: 1rem;
+  }
+
+  input, textarea, select, button {
+    font-size: 16px;
+  }
+
+  .leaflet-container {
+    min-height: 100%;
+    touch-action: pan-x pan-y;
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
 }

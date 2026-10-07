@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { Flame, MessageSquare, Sparkles, ThumbsUp } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
+import { getData, updateUserAvatar } from "@/lib/beta-store";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyReports } from "@/hooks/useFirehelp";
 import {
@@ -22,12 +24,12 @@ import {
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
     meta: [
-      { title: "Meu perfil — FireHelpBeta" },
+      { title: "Meu perfil — FireHelp" },
       {
         name: "description",
-        content: "Acompanhe suas ocorrências reportadas, tópicos criados e contribuições no FireHelpBeta.",
+        content: "Acompanhe suas ocorrências reportadas, tópicos criados e contribuições no FireHelp.",
       },
-      { property: "og:title", content: "Meu perfil — FireHelpBeta" },
+      { property: "og:title", content: "Meu perfil — FireHelp" },
       {
         property: "og:description",
         content: "Suas ocorrências, tópicos e contribuições na comunidade.",
@@ -38,26 +40,40 @@ export const Route = createFileRoute("/_authenticated/perfil")({
 });
 
 function ProfilePage() {
-  const { user, profile, roles } = useAuth();
+  const { user, profile, roles, refresh } = useAuth();
+  const avatarInput = useRef<HTMLInputElement>(null);
+  const [savingAvatar, setSavingAvatar] = useState(false);
   const reports = useMyReports(user?.id ?? null);
 
   const stats = useQuery({
     queryKey: ["profile_stats", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [posts, comments] = await Promise.all([
-        supabase
-          .from("forum_posts")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user!.id),
-        supabase
-          .from("forum_comments")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user!.id),
-      ]);
-      return { posts: posts.count ?? 0, comments: comments.count ?? 0 };
+      const data = getData();
+      return {
+        posts: (data.forum_posts ?? []).filter((item: any) => item.user_id === user!.id).length,
+        comments: (data.forum_comments ?? []).filter((item: any) => item.user_id === user!.id).length,
+      };
     },
   });
+
+  async function handleAvatar(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem."); return; }
+    setSavingAvatar(true);
+    try {
+      const dataUrl = await resizeImage(file, 512, 0.82);
+      updateUserAvatar(user.id, dataUrl);
+      refresh();
+      toast.success("Foto de perfil atualizada.");
+    } catch {
+      toast.error("Não foi possível carregar a foto.");
+    } finally {
+      setSavingAvatar(false);
+      event.target.value = "";
+    }
+  }
 
   const reportCount = reports.data?.length ?? 0;
   const contributions = reportCount + (stats.data?.posts ?? 0) + (stats.data?.comments ?? 0);
@@ -66,10 +82,21 @@ function ProfilePage() {
     <AppShell>
       <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8">
         <div className="surface-card flex flex-wrap items-center gap-4 p-5">
-          <Avatar className="size-16 border border-border">
-            <AvatarImage src={profile?.avatar_url ?? undefined} alt={profile?.full_name} />
-            <AvatarFallback>{(profile?.full_name ?? "U").slice(0, 1)}</AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="size-16 border border-border">
+              <AvatarImage src={profile?.avatar_url ?? undefined} alt={profile?.full_name} />
+              <AvatarFallback>{(profile?.full_name ?? "U").slice(0, 1)}</AvatarFallback>
+            </Avatar>
+            <button
+              type="button"
+              onClick={() => avatarInput.current?.click()}
+              disabled={savingAvatar}
+              className="absolute -bottom-1 -right-1 rounded-full border border-border bg-background px-2 py-1 text-[10px] font-semibold shadow-sm"
+            >
+              {savingAvatar ? "..." : "Foto"}
+            </button>
+            <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={handleAvatar} />
+          </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-bold">{profile?.full_name ?? "Meu perfil"}</h1>
             <p className="truncate text-sm text-muted-foreground">{profile?.email}</p>
@@ -146,6 +173,27 @@ function ProfilePage() {
       </div>
     </AppShell>
   );
+}
+
+async function resizeImage(file: File, maxSize: number, quality: number) {
+  const src = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", quality);
 }
 
 function MiniStat({

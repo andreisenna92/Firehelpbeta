@@ -13,10 +13,10 @@ import { formatDate } from "@/lib/firehelp";
 export const Route = createFileRoute("/_authenticated/membros")({
   head: () => ({
     meta: [
-      { title: "Membros da comunidade — FireHelpBeta Saquarema" },
-      { name: "description", content: "Conheça os membros da comunidade FireHelpBeta de Saquarema." },
-      { property: "og:title", content: "Membros da comunidade — FireHelpBeta" },
-      { property: "og:description", content: "Lista de membros da comunidade FireHelpBeta." },
+      { title: "Membros da comunidade — FireHelp Saquarema" },
+      { name: "description", content: "Conheça os membros da comunidade FireHelp de Saquarema." },
+      { property: "og:title", content: "Membros da comunidade — FireHelp" },
+      { property: "og:description", content: "Lista de membros da comunidade FireHelp." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

@@ -9,8 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { SafetyNotice } from "@/components/SafetyNotice";
 import { FireMap } from "@/components/map/FireMap";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { createFireReport } from "@/lib/beta-store";
 import {
   FIRE_SEVERITIES,
   FIRE_TYPES,
@@ -22,12 +22,12 @@ import {
 export const Route = createFileRoute("/_authenticated/reportar")({
   head: () => ({
     meta: [
-      { title: "Reportar incêndio em Saquarema — FireHelpBeta" },
+      { title: "Reportar incêndio em Saquarema — FireHelp" },
       {
         name: "description",
-        content: "Registre um foco de incêndio em Saquarema: tipo, foto, localização e descrição.",
+        content: "Registre um foco de incêndio em Saquarema: tipo, foto obrigatória, localização e descrição.",
       },
-      { property: "og:title", content: "Reportar incêndio em Saquarema — FireHelpBeta" },
+      { property: "og:title", content: "Reportar incêndio em Saquarema — FireHelp" },
       {
         property: "og:description",
         content: "Registre uma ocorrência e ajude a comunidade de Saquarema a reagir mais rápido.",
@@ -91,38 +91,23 @@ function ReportPage() {
     if (!type) { toast.error("Escolha o tipo de ocorrência."); return; }
     if (!coords) { toast.error("Informe a localização da ocorrência."); return; }
     if (!confirmed) { toast.error("Confirme que as informações são verdadeiras."); return; }
+    if (files.length === 0) { toast.error("Envie pelo menos uma foto do local da ocorrência."); return; }
 
     setSaving(true);
     try {
-      const { data: report, error } = await supabase
-        .from("fire_reports")
-        .insert({
-          user_id: user.id,
-          type,
-          severity,
-          description: description.trim() || null,
-          latitude: coords.lat,
-          longitude: coords.lng,
-          address: address.trim() || null,
-        })
-        .select("id, protocol")
-        .single();
-      if (error) throw error;
-
-      for (const file of files) {
-        const path = `${user.id}/${report.id}/${crypto.randomUUID()}-${file.name.replace(/[^\w.-]/g, "")}`;
-        const upload = await supabase.storage.from("fire-images").upload(path, file);
-        if (upload.error) continue;
-        const signed = await supabase.storage
-          .from("fire-images")
-          .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
-        if (signed.data?.signedUrl) {
-          await supabase
-            .from("fire_report_images")
-            .insert({ fire_report_id: report.id, image_url: signed.data.signedUrl });
-        }
-      }
-
+      const images = await Promise.all(files.slice(0, 3).map((file) => resizeImage(file, 1280, 0.78)));
+      const report = createFireReport({
+        user_id: user.id,
+        type,
+        severity,
+        description: description.trim() || null,
+        latitude: coords.lat,
+        longitude: coords.lng,
+        address: address.trim() || null,
+        status: "pending",
+        is_demo: false,
+        fire_report_images: images.map((image_url) => ({ image_url })),
+      });
       setProtocol(report.protocol);
       toast.success("Ocorrência registrada com sucesso.");
     } catch (error) {
@@ -203,10 +188,10 @@ function ReportPage() {
           </div>
         </Field>
 
-        <Field step={3} title="Fotos (opcional)">
+        <Field step={3} title="Foto do local (obrigatória)">
           <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-border bg-card px-4 py-5 text-sm text-muted-foreground hover:bg-secondary">
             <Camera className="size-5" />
-            Toque para adicionar fotos da ocorrência
+            Toque para adicionar pelo menos uma foto do local
             <input
               type="file"
               accept="image/*"
@@ -293,6 +278,27 @@ function ReportPage() {
       </form>
     </AppShell>
   );
+}
+
+async function resizeImage(file: File, maxSize: number, quality: number) {
+  const src = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", quality);
 }
 
 function Field({

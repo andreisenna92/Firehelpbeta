@@ -1,0 +1,20 @@
+{
+  "name": "FireHelp",
+  "short_name": "FireHelp",
+  "description": "Informação que protege. Plataforma comunitária de prevenção e ocorrências de incêndios.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#26354f",
+  "background_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

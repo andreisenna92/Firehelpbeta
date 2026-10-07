@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminUsers } from "@/components/admin/AdminUsers";
 import { AdminPostEditor } from "@/components/admin/AdminPostEditor";
+import { createNews as createBetaNews, deleteNews as deleteBetaNews, getData, getUsers, setNewsPublished, updateNews as updateBetaNews, updateFireReportStatus, saveData } from "@/lib/beta-store";
 import { useForumPosts, useNews, useReports } from "@/hooks/useFirehelp";
 import {
   FIRE_STATUSES,
@@ -29,12 +29,12 @@ import {
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Painel de moderação — FireHelpBeta" },
+      { title: "Painel de moderação — FireHelp" },
       {
         name: "description",
         content: "Área restrita para moderação de ocorrências, notícias, fórum e denúncias.",
       },
-      { property: "og:title", content: "Painel de moderação — FireHelpBeta" },
+      { property: "og:title", content: "Painel de moderação — FireHelp" },
       { property: "og:description", content: "Gestão de ocorrências, notícias e denúncias." },
       { name: "robots", content: "noindex" },
     ],
@@ -52,23 +52,14 @@ function AdminPage() {
   const denuncias = useQuery({
     queryKey: ["content_reports"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_reports")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const data = getData();
+      return [...(data.content_reports ?? [])].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     },
   });
 
   const users = useQuery({
     queryKey: ["admin_users"],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("profiles")
-        .select("id", { count: "exact", head: true });
-      return count ?? 0;
-    },
+    queryFn: async () => getUsers().length,
   });
 
   const [title, setTitle] = useState("");
@@ -111,29 +102,24 @@ function AdminPage() {
   const active = all.filter((r) => r.status === "active");
 
   async function updateStatus(id: string, status: FireStatus) {
-    const { error } = await supabase
-      .from("fire_reports")
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) toast.error("Não foi possível atualizar o status.");
-    else {
-      toast.success("Status atualizado.");
-      void queryClient.invalidateQueries({ queryKey: ["fire_reports"] });
-      void queryClient.invalidateQueries({ queryKey: ["community_stats"] });
-    }
+    updateFireReportStatus(id, status);
+    toast.success("Status atualizado.");
+    void queryClient.invalidateQueries({ queryKey: ["fire_reports"] });
+    void queryClient.invalidateQueries({ queryKey: ["community_stats"] });
   }
 
   async function createNews(event: React.FormEvent) {
     event.preventDefault();
     if (!title.trim() || !content.trim()) { toast.error("Título e conteúdo são obrigatórios."); return; }
+    if (!imageUrl.trim()) { toast.error("Adicione uma foto à notícia ou alerta."); return; }
     setSavingNews(true);
-    const payload = { title: title.trim(), summary: summary.trim() || null, content: content.trim(), image_url: imageUrl.trim() || null, category };
-    const { error } = editingNews
-      ? await supabase.from("news").update(payload).eq("id", editingNews)
-      : await supabase.from("news").insert({ ...payload, slug: `${slugify(title)}-${Date.now().toString(36).slice(-4)}`, author_id: user?.id ?? null, author_name: profile?.full_name ?? "Equipe FireHelpBeta", published: true });
+    if (editingNews) {
+      updateBetaNews(editingNews, { title: title.trim(), summary: summary.trim() || null, content: content.trim(), image_url: imageUrl.trim(), category });
+    } else {
+      createBetaNews({ title: title.trim(), summary: summary.trim() || null, content: content.trim(), image_url: imageUrl.trim(), category, content_type: category === 'alertas' ? 'alerta' : 'noticia', author_id: user?.id ?? null, author_name: profile?.full_name ?? "Equipe FireHelp", published: true });
+    }
     setSavingNews(false);
-    if (error) { toast.error(editingNews ? "Não foi possível salvar a notícia." : "Não foi possível publicar a notícia."); return; }
-    toast.success(editingNews ? "Notícia atualizada." : "Notícia publicada.");
+    toast.success(editingNews ? "Publicação atualizada." : "Publicação publicada.");
     setTitle(""); setSummary(""); setContent(""); setImageUrl(""); setEditingNews(null);
     void queryClient.invalidateQueries({ queryKey: ["news"] });
   }
@@ -143,22 +129,27 @@ function AdminPage() {
   }
 
   async function togglePublished(id: string, published: boolean) {
-    await supabase.from("news").update({ published: !published }).eq("id", id);
+    setNewsPublished(id, !published);
     void queryClient.invalidateQueries({ queryKey: ["news"] });
   }
 
   async function deleteNews(id: string) {
-    await supabase.from("news").delete().eq("id", id);
+    deleteBetaNews(id);
+    toast.success("Publicação excluída.");
     void queryClient.invalidateQueries({ queryKey: ["news"] });
   }
 
   async function deletePost(id: string) {
-    await supabase.from("forum_posts").delete().eq("id", id);
+    const data = getData();
+    data.forum_posts = (data.forum_posts ?? []).filter((post: any) => post.id !== id);
+    saveData(data);
     void queryClient.invalidateQueries({ queryKey: ["forum_posts"] });
   }
 
   async function resolveReport(id: string) {
-    await supabase.from("content_reports").update({ resolved: true }).eq("id", id);
+    const data = getData();
+    data.content_reports = (data.content_reports ?? []).map((item: any) => item.id === id ? { ...item, resolved: true } : item);
+    saveData(data);
     void queryClient.invalidateQueries({ queryKey: ["content_reports"] });
   }
 
@@ -206,6 +197,13 @@ function AdminPage() {
                     {label(FIRE_STATUSES, report.status as FireStatus)}
                   </span>
                 </div>
+                {report.fire_report_images?.[0]?.image_url && (
+                  <img
+                    src={report.fire_report_images[0].image_url}
+                    alt="Foto do local da ocorrência"
+                    className="h-48 w-full rounded-xl object-cover"
+                  />
+                )}
                 {report.description && <p className="text-sm">{report.description}</p>}
                 <div className="flex flex-wrap gap-2">
                   {FIRE_STATUSES.map((status) => (
@@ -232,11 +230,13 @@ function AdminPage() {
                 onChange={(e) => setSummary(e.target.value)}
                 placeholder="Resumo"
               />
-              <Input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="URL da imagem (opcional)"
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="cursor-pointer rounded-md border border-dashed border-border px-3 py-2 text-sm font-semibold hover:bg-muted">
+                  📷 {imageUrl ? "Trocar foto" : "Adicionar foto"}
+                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { setImageUrl(await resizeImage(file, 1280, 0.82)); } catch { toast.error("Não foi possível carregar a foto."); } e.target.value = ""; }} />
+                </label>
+                {imageUrl && <img src={imageUrl} alt="Prévia" className="h-16 w-24 rounded object-cover" />}
+              </div>
               <Textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -354,6 +354,15 @@ function AdminPage() {
       </div>
     </AppShell>
   );
+}
+
+async function resizeImage(file: File, maxSize: number, quality: number) {
+  const src = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(file); });
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = src; });
+  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+  const canvas = document.createElement("canvas"); canvas.width = Math.max(1, Math.round(image.width * scale)); canvas.height = Math.max(1, Math.round(image.height * scale));
+  canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", quality);
 }
 
 function AdminStat({ label: text, value }: { label: string; value: number }) {

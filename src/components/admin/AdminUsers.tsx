@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth, promoteUser, blockUser } from "@/hooks/useAuth";
+import { getUsers } from "@/lib/beta-store";
 
 export function AdminUsers() {
   const { user } = useAuth();
@@ -13,17 +13,7 @@ export function AdminUsers() {
   const [q, setQ] = useState("");
   const list = useQuery({
     queryKey: ["admin_members"],
-    queryFn: async () => {
-      const [p, r] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, avatar_url, blocked, created_at").order("full_name"),
-        supabase.from("user_roles").select("user_id, role"),
-      ]);
-      if (p.error) throw p.error;
-      const staff = new Set(
-        (r.data ?? []).filter((x) => x.role === "admin" || x.role === "moderator").map((x) => x.user_id),
-      );
-      return (p.data ?? []).map((m) => ({ ...m, gestor: staff.has(m.id) }));
-    },
+    queryFn: async () => getUsers().sort((a, b) => a.full_name.localeCompare(b.full_name)).map((m) => ({ ...m, gestor: m.role === "admin" || m.role === "moderator" })),
   });
 
   async function setBlocked(id: string, blocked: boolean) { blockUser(id, blocked); toast.success(blocked ? 'Membro suspenso.' : 'Membro reativado.'); void qc.invalidateQueries({ queryKey: ['admin_members'] }); }

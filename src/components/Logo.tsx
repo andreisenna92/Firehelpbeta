@@ -10,7 +10,7 @@ export function Logo({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <span className="flex flex-col leading-none">
           <span className="font-display text-lg font-extrabold tracking-tight">
-            Fire<span className="text-alert">HelpBeta</span>
+            Fire<span className="text-alert">Help</span>
           </span>
           <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
             Informação que protege

@@ -15,10 +15,10 @@ export const Route = createFileRoute("/_authenticated/mensagens")({
   validateSearch: z.object({ com: z.string().uuid().optional() }),
   head: () => ({
     meta: [
-      { title: "Mensagens — FireHelpBeta Saquarema" },
-      { name: "description", content: "Suas conversas privadas com membros da comunidade FireHelpBeta." },
-      { property: "og:title", content: "Mensagens — FireHelpBeta" },
-      { property: "og:description", content: "Conversas privadas da comunidade FireHelpBeta." },
+      { title: "Mensagens — FireHelp Saquarema" },
+      { name: "description", content: "Suas conversas privadas com membros da comunidade FireHelp." },
+      { property: "og:title", content: "Mensagens — FireHelp" },
+      { property: "og:description", content: "Conversas privadas da comunidade FireHelp." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
